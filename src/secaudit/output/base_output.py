@@ -1,69 +1,90 @@
 """
-Base output class for SecAudit
+Base output classes for SecAudit
 """
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Any, Dict, List, Optional
 import logging
-import os
 from datetime import datetime
 
+
 class BaseOutput(ABC):
-    """Abstract base class for all output handlers"""
+    """Abstract base class for all output implementations"""
     
-    def __init__(self, config: dict):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.logger = logging.getLogger(__name__)
-        self.output_path = config.get('path', './output/')
-        self.compression = config.get('compression', False)
-        
-        # Ensure output directory exists
-        os.makedirs(self.output_path, exist_ok=True)
     
     @abstractmethod
-    def export(self, results: Dict[str, Any]) -> bool:
+    def export(self, data: Any, output_path: Optional[str] = None) -> bool:
         """
-        Export analysis results
+        Export data to specified format
         
         Args:
-            results (Dict): Analysis results
+            data (Any): Data to export
+            output_path (str, optional): Output file path
             
         Returns:
             bool: True if successful
         """
         pass
     
-    def generate_filename(self, prefix: str = 'secaudit') -> str:
-        """Generate output filename with timestamp"""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        return f"{prefix}_{timestamp}"
+    @abstractmethod
+    def validate_config(self) -> bool:
+        """Validate output configuration"""
+        pass
     
-    def should_include_raw(self) -> bool:
-        """Check if raw data should be included in output"""
-        return self.config.get('include_raw', False)
-    
-    def get_max_file_size(self) -> int:
-        """Get maximum file size in bytes"""
-        size_str = self.config.get('max_file_size', '100MB')
-        if size_str.endswith('MB'):
-            return int(size_str[:-2]) * 1024 * 1024
-        elif size_str.endswith('GB'):
-            return int(size_str[:-2]) * 1024 * 1024 * 1024
+    def get_output_path(self, filename: Optional[str] = None) -> str:
+        """Get output file path"""
+        output_dir = self.config.get('path', './output/')
+        if filename:
+            return f"{output_dir.rstrip('/')}/{filename}"
         else:
-            return 100 * 1024 * 1024  # Default 100MB
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            return f"{output_dir.rstrip('/')}/secaudit_output_{timestamp}"
     
-    def validate_output_path(self) -> bool:
-        """Validate output path"""
+    def compress_output(self, file_path: str) -> bool:
+        """Compress output file if compression is enabled"""
+        if not self.config.get('compression', False):
+            return True
+        
         try:
-            if not os.path.exists(self.output_path):
-                os.makedirs(self.output_path, exist_ok=True)
+            import gzip
+            import os
             
-            # Test write permissions
-            test_file = os.path.join(self.output_path, '.test_write')
-            with open(test_file, 'w') as f:
-                f.write('test')
-            os.remove(test_file)
+            with open(file_path, 'rb') as f_in:
+                with gzip.open(f"{file_path}.gz", 'wb') as f_out:
+                    f_out.writelines(f_in)
             
+            os.remove(file_path)  # Remove original file
+            self.logger.info(f"Compressed output to: {file_path}.gz")
             return True
         except Exception as e:
-            self.logger.error(f"Output path validation failed: {e}")
+            self.logger.error(f"Failed to compress output: {e}")
             return False
+
+
+class ReportGenerator(BaseOutput):
+    """Abstract base class for report generation"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(config)
+        self.template_dir = config.get('template_dir', './templates/')
+    
+    @abstractmethod
+    def generate_summary(self, data: Any) -> Dict[str, Any]:
+        """Generate summary data for report"""
+        pass
+    
+    @abstractmethod
+    def generate_detailed_report(self, data: Any) -> Dict[str, Any]:
+        """Generate detailed report data"""
+        pass
+    
+    def get_report_metadata(self) -> Dict[str, Any]:
+        """Get report metadata"""
+        return {
+            'generated_at': datetime.now().isoformat(),
+            'secaudit_version': '1.0.0',
+            'report_type': self.__class__.__name__,
+            'config': self.config
+        }
