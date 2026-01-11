@@ -1,0 +1,82 @@
+# Production Environment Configuration
+# Optimized for performance and security in production
+
+secaudit:
+  version: "1.0"
+  debug: false                      # Disable debug mode
+  log_level: "WARNING"              # Only warnings and errors
+  
+  input:
+    type: "file"
+    path: "/var/log/auth.log"       # Production log path
+    format: "ssh"
+    encoding: "utf-8"
+    rotation: true                  # Enable rotation for production
+    buffer_size: 16384              # Larger buffer for performance
+    timeout: 60                     # Longer timeout for production
+  
+  analysis:
+    threat_detection:
+      enabled: true
+      rules_path: "/etc/secaudit/rules/threat_rules.yaml"  # System-wide rules
+      severity_threshold: "medium"  # Focus on medium+ severity
+      max_rules: 5000               # More rules for comprehensive detection
+      real_time: true               # Enable real-time detection
+    
+    anomaly_detection:
+      enabled: true                 # Enable for production security
+      algorithms: ["statistical", "ml"]  # Use multiple algorithms
+      sensitivity: 0.7              # Balanced sensitivity
+      learning_period: "7d"         # Longer learning period
+      update_interval: "6h"         # Less frequent updates
+    
+    correlation:
+      enabled: true
+      time_window: "4h"             # Longer correlation window
+      cross_log: true               # Enable cross-log correlation
+      max_correlations: 1000        # Higher correlation limit
+      threshold: 0.6                # Higher threshold for accuracy
+  
+  output:
+    format: "json"                  # JSON for integration
+    path: "/var/log/secaudit/"      # System log directory
+    compression: true               # Enable compression for storage
+    real_time: true                 # Real-time output for monitoring
+    include_raw: false              # Don't include raw data for performance
+    max_file_size: "1GB"            # Larger files for production
+    rotate_logs: true               # Enable log rotation
+  
+  plugins:
+    enabled: true
+    paths: ["/etc/secaudit/plugins/", "/opt/secaudit/plugins/"]
+    auto_load: true
+    sandbox_mode: true              # Always use sandbox in production
+    timeout: 120                    # Longer timeout for complex plugins
+  
+  security:
+    log_sanitization: true          # Always sanitize in production
+    sensitive_patterns:
+      - "password"
+      - "token"
+      - "key"
+      - "secret"
+      - "credential"
+      - "api_key"
+      - "auth_token"
+    encryption: true                # Enable encryption for sensitive data
+    audit_trail: true
+    access_control: true            # Enable access control
+  
+  performance:
+    batch_size: 5000                # Larger batches for performance
+    workers: 8                      # More workers for throughput
+    memory_limit: "8GB"             # Higher memory limit
+    timeout: 1800                   # 30 minutes timeout
+    cache_size: 50000               # Larger cache
+  
+  database:
+    type: "postgresql"              # Use PostgreSQL for production
+    path: "postgresql://user:pass@localhost/secaudit"  # Database connection
+    backup_interval: "6h"           # More frequent backups
+    retention_days: 365             # Year of data retention
+    max_connections: 50             # More connections for load

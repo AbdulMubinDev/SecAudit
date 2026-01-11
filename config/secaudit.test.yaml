@@ -1,0 +1,75 @@
+# Test Environment Configuration
+# Minimal configuration for unit and integration tests
+
+secaudit:
+  version: "1.0"
+  debug: true
+  log_level: "ERROR"                # Minimal logging for tests
+  
+  input:
+    type: "file"
+    path: "./tests/fixtures/sample_logs/minimal.log"
+    format: "ssh"
+    encoding: "utf-8"
+    rotation: false
+    buffer_size: 1024
+    timeout: 5
+  
+  analysis:
+    threat_detection:
+      enabled: true
+      rules_path: "tests/fixtures/rules/test_rules.yaml"
+      severity_threshold: "low"
+      max_rules: 10
+      real_time: false
+    
+    anomaly_detection:
+      enabled: false                # Disable for predictable test results
+      algorithms: ["statistical"]
+      sensitivity: 0.5
+      learning_period: "1h"
+      update_interval: "1h"
+    
+    correlation:
+      enabled: false                # Disable for simpler tests
+      time_window: "5m"
+      cross_log: false
+      max_correlations: 5
+      threshold: 0.5
+  
+  output:
+    format: "json"
+    path: "./tests/output/"
+    compression: false
+    real_time: false
+    include_raw: true
+    max_file_size: "1MB"
+    rotate_logs: false
+  
+  plugins:
+    enabled: false                  # Disable plugins for isolated testing
+    paths: []
+    auto_load: false
+    sandbox_mode: false
+    timeout: 10
+  
+  security:
+    log_sanitization: false         # Don't sanitize for test data
+    sensitive_patterns: []
+    encryption: false
+    audit_trail: false
+    access_control: false
+  
+  performance:
+    batch_size: 10                  # Small batches for fast tests
+    workers: 1                      # Single worker for predictable results
+    memory_limit: "128MB"
+    timeout: 30
+    cache_size: 100
+  
+  database:
+    type: "sqlite"
+    path: ":memory:"                # In-memory database for tests
+    backup_interval: "1h"
+    retention_days: 1
+    max_connections: 1

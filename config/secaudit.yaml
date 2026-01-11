@@ -1,0 +1,91 @@
+# SecAudit Configuration File
+# This file contains the main configuration for SecAudit
+# Supports YAML format with comprehensive validation
+
+secaudit:
+  version: "1.0"
+  debug: false
+  log_level: "INFO"
+  
+  # Input Configuration
+  input:
+    type: "file"                    # Input type: file, stream, api
+    path: "/var/log/auth.log"       # Input file path or stream source
+    format: "ssh"                   # Log format: ssh, syslog, custom, windows, cloud
+    encoding: "utf-8"               # File encoding
+    rotation: true                  # Enable file rotation detection
+    buffer_size: 8192               # Buffer size for file/stream reading
+    timeout: 30                     # Connection timeout in seconds
+  
+  # Analysis Configuration
+  analysis:
+    # Threat Detection Settings
+    threat_detection:
+      enabled: true                 # Enable threat detection
+      rules_path: "config/rules/threat_rules.yaml"  # Path to threat rules file
+      severity_threshold: "medium"  # Minimum severity threshold (low, medium, high, critical)
+      max_rules: 1000               # Maximum number of rules to load
+      real_time: false              # Enable real-time threat detection
+    
+    # Anomaly Detection Settings
+    anomaly_detection:
+      enabled: true                 # Enable anomaly detection
+      algorithms: ["statistical"]   # List of algorithms: statistical, ml, behavioral
+      sensitivity: 0.8              # Detection sensitivity (0.0 to 1.0)
+      learning_period: "24h"        # Time period for learning baseline
+      update_interval: "1h"         # How often to update baselines
+    
+    # Event Correlation Settings
+    correlation:
+      enabled: true                 # Enable event correlation
+      time_window: "1h"             # Time window for correlation
+      cross_log: true               # Enable cross-log correlation
+      max_correlations: 100         # Maximum correlations to track
+      threshold: 0.5                # Correlation threshold (0.0 to 1.0)
+  
+  # Output Configuration
+  output:
+    format: "json"                  # Output format: json, html, csv, siem, xml
+    path: "./output/"               # Output directory path
+    compression: true               # Enable output compression
+    real_time: false                # Enable real-time output
+    include_raw: false              # Include raw log data in output
+    max_file_size: "100MB"          # Maximum output file size
+    rotate_logs: true               # Enable output log rotation
+  
+  # Plugin System Configuration
+  plugins:
+    enabled: true                   # Enable plugin system
+    paths: ["plugins/"]             # List of plugin directories
+    auto_load: true                 # Auto-load plugins on startup
+    sandbox_mode: false             # Run plugins in sandbox mode
+    timeout: 60                     # Plugin execution timeout in seconds
+  
+  # Security Configuration
+  security:
+    log_sanitization: true          # Enable log sanitization
+    sensitive_patterns:             # Patterns to sanitize in logs
+      - "password"
+      - "token"
+      - "key"
+      - "secret"
+      - "credential"
+    encryption: false               # Enable output encryption
+    audit_trail: true               # Enable audit trail logging
+    access_control: false           # Enable access control
+  
+  # Performance Configuration
+  performance:
+    batch_size: 1000                # Batch size for processing
+    workers: 4                      # Number of worker threads
+    memory_limit: "2GB"             # Maximum memory usage
+    timeout: 300                    # Processing timeout in seconds
+    cache_size: 10000               # Cache size for frequently accessed data
+  
+  # Database Configuration
+  database:
+    type: "sqlite"                  # Database type: sqlite, postgresql, mysql
+    path: "./data/secaudit.db"      # Database file path
+    backup_interval: "1h"           # Database backup interval
+    retention_days: 30              # Data retention period in days
+    max_connections: 10             # Maximum database connections

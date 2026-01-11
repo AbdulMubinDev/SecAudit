@@ -1,0 +1,80 @@
+# Development Environment Configuration
+# Optimized for development and testing
+
+secaudit:
+  version: "1.0"
+  debug: true                       # Enable debug mode for development
+  log_level: "DEBUG"                # Detailed logging for development
+  
+  input:
+    type: "file"
+    path: "./tests/fixtures/sample_logs/auth.log"  # Use test logs for development
+    format: "ssh"
+    encoding: "utf-8"
+    rotation: false                 # Disable rotation for test files
+    buffer_size: 4096
+    timeout: 10
+  
+  analysis:
+    threat_detection:
+      enabled: true
+      rules_path: "config/rules/threat_rules.yaml"
+      severity_threshold: "low"     # Lower threshold for testing
+      max_rules: 100                # Limit rules for faster testing
+      real_time: false
+    
+    anomaly_detection:
+      enabled: false                # Disable for faster development cycles
+      algorithms: ["statistical"]
+      sensitivity: 0.5
+      learning_period: "1h"
+      update_interval: "30m"
+    
+    correlation:
+      enabled: true
+      time_window: "30m"            # Shorter window for testing
+      cross_log: false              # Disable cross-log for simplicity
+      max_correlations: 10
+      threshold: 0.3
+  
+  output:
+    format: "json"
+    path: "./tests/output/"         # Output to test directory
+    compression: false              # Disable compression for easier debugging
+    real_time: false
+    include_raw: true               # Include raw data for debugging
+    max_file_size: "10MB"
+    rotate_logs: false
+  
+  plugins:
+    enabled: true
+    paths: ["plugins/", "tests/fixtures/plugins/"]
+    auto_load: true
+    sandbox_mode: true              # Enable sandbox for safety
+    timeout: 30
+  
+  security:
+    log_sanitization: false         # Disable for easier debugging
+    sensitive_patterns:
+      - "password"
+      - "token"
+      - "key"
+      - "secret"
+      - "credential"
+    encryption: false
+    audit_trail: true
+    access_control: false
+  
+  performance:
+    batch_size: 100                 # Smaller batches for testing
+    workers: 2                      # Fewer workers for development
+    memory_limit: "512MB"
+    timeout: 60
+    cache_size: 1000
+  
+  database:
+    type: "sqlite"
+    path: "./tests/data/test_secaudit.db"  # Use test database
+    backup_interval: "1h"
+    retention_days: 7               # Shorter retention for testing
+    max_connections: 5
